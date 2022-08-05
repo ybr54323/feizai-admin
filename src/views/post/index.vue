@@ -2,6 +2,7 @@
 import DrawerCU from "./components/drawerCU.vue";
 import { getPosts, delPost } from "@/apis/post";
 import { reactive, ref, onMounted } from "vue";
+import { FILE_PREFIX } from "@/const/index";
 
 const cu = ref();
 const columns = [
@@ -55,9 +56,13 @@ const onDel = (record) => {
     fetch();
   });
 };
+const onSubmit = () => {
+  params.page = 1;
+  fetch();
+};
 </script>
 <template>
-  <drawer-c-u ref="cu"></drawer-c-u>
+  <drawer-c-u ref="cu" @submit="onSubmit"></drawer-c-u>
 
   <a-card title="编辑">
     <a-button class="mb-8" type="primary" @click="onAdd">添加</a-button>
@@ -82,12 +87,15 @@ const onDel = (record) => {
           <a href="javascript:;" @click="onDel(record)">删除</a>
         </template>
         <template v-if="column.key === 'files'">
-          <a-image
-            v-for="file in record.files"
-            :src="`http://localhost:3000/public/${file.name}`"
-            :key="file.name"
-          >
-          </a-image>
+          <div class="flex items-center gap">
+            <a-image
+              style="width: 100px; border-radius: 4px"
+              v-for="file in record.files"
+              :src="FILE_PREFIX + file.name"
+              :key="file.name"
+            >
+            </a-image>
+          </div>
         </template>
       </template>
     </a-table>

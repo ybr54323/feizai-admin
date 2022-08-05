@@ -32,3 +32,11 @@ export const getPost = (params) => {
     params,
   });
 };
+
+export const putPost = (data) => {
+  return request({
+    url: path + "/post",
+    method: "put",
+    data,
+  });
+};

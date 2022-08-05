@@ -14,3 +14,14 @@
 .items-center {
   align-items: center;
 }
+
+.justify-center {
+  justify-content: center;
+}
+.gap {
+  gap: 8px;
+}
+
+.rounded {
+  border-radius: 4px;
+}

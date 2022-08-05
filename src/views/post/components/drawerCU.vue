@@ -1,9 +1,10 @@
 <script setup>
-import { ref, defineExpose, reactive, computed, toRaw, nextTick } from "vue";
-import { getPost } from "@/apis/post";
+import { ref, reactive, computed, toRaw, nextTick } from "vue";
+import { getPost, putPost, post } from "@/apis/post";
 import { Form } from "ant-design-vue";
-import { post } from "@/apis/post";
 import { getBase64 } from "@/utils/index";
+import { FILE_PREFIX } from "@/const/index";
+const emit = defineEmits(["submit"]);
 const visible = ref(false);
 const t = ref("add");
 
@@ -47,27 +48,7 @@ const ruleRef = reactive({
 });
 
 const { resetFields, validate } = Form.useForm(modelRef, ruleRef);
-const onFinish = () => {
-  validate().then(() => {
-    const formData = new FormData();
-    Object.entries(toRaw(modelRef)).forEach(([k, v]) => {
-      formData.append(k, v);
-    });
 
-    const files = fileList._rawValue.map((f) => f.originFileObj);
-    for (let file of files) {
-      formData.append("files", file);
-    }
-
-    post(formData).then(() => {
-      resetFields();
-      emit("submit");
-    });
-  });
-};
-const onReset = () => {
-  resetFields();
-};
 const customRequest = () => {};
 const onChangeFile = (data) => {
   const file = data?.file;
@@ -81,16 +62,57 @@ const open = (params = {}) => {
   if (t.value === "edit") {
     getPost({ id: record.id }).then((res) => {
       const record = res?.row || {};
+      const files = record?.files || [];
       nextTick(() => {
         modelRef.id = record.id;
         modelRef.title = record.title;
         modelRef.content = record.content;
+
+        fileList.value = files.map((f, i) => {
+          return {
+            uid: i,
+            name: f.name,
+            status: "done",
+            url: FILE_PREFIX + f.name,
+          };
+        });
       });
     });
   }
 };
 const close = () => {
+  resetFields();
+  fileList.value = [];
   visible.value = false;
+};
+const onFinish = () => {
+  validate().then(() => {
+    const formData = new FormData();
+    Object.entries(toRaw(modelRef)).forEach(([k, v]) => {
+      formData.append(k, v);
+    });
+
+    const files = fileList.value.map((f) => f.originFileObj);
+    const originalFileNames = fileList.value.filter((f) => !f.originFileObj).map(f => f.name);
+
+    for (let file of files) {
+      if (file) formData.append("files", file);
+    }
+    for (let name of originalFileNames) {
+      formData.append("originalFilenames", name);
+    }
+
+    const api = t.value === "add" ? post : putPost;
+
+    api(formData).then(() => {
+      resetFields();
+      close();
+      emit("submit");
+    });
+  });
+};
+const onReset = () => {
+  resetFields();
 };
 
 defineExpose({
